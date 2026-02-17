@@ -22,49 +22,23 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
 endif()
 
 add_executable(voxel_dda_raylib main.c)
+include(FetchContent)
+set(FETCHCONTENT_QUIET FALSE)
 
-set(_raylib_target "")
+# Fetch raylib
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    raylib
+    GIT_REPOSITORY "https://github.com/raysan5/raylib.git"
+    GIT_TAG "master"
+    GIT_PROGRESS TRUE
+    GIT_SHALLOW 1
+)
+FetchContent_MakeAvailable(raylib)
 
-# Prefer an already-installed raylib package when available.
-find_package(raylib QUIET CONFIG)
-if(TARGET raylib)
-    set(_raylib_target raylib)
-elseif(TARGET raylib::raylib)
-    set(_raylib_target raylib::raylib)
-endif()
 
-option(RAYLIB_FETCHCONTENT "Fetch raylib via CMake FetchContent when not found" ON)
-set(RAYLIB_FETCH_TAG "5.0" CACHE STRING "raylib tag to fetch via FetchContent")
-
-# Fallback: fetch raylib from upstream.
-if(NOT _raylib_target AND RAYLIB_FETCHCONTENT)
-    include(FetchContent)
-
-    # Keep fetched raylib build minimal.
-    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
-
-    FetchContent_Declare(
-        raylib
-        URL https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_FETCH_TAG}.tar.gz
-        DOWNLOAD_EXTRACT_TIMESTAMP ON
-    )
-    FetchContent_MakeAvailable(raylib)
-
-    if(TARGET raylib)
-        set(_raylib_target raylib)
-    elseif(TARGET raylib::raylib)
-        set(_raylib_target raylib::raylib)
-    endif()
-endif()
-
-if(NOT _raylib_target)
-    message(FATAL_ERROR
-        "raylib was not found. Install raylib dev files, set raylib_DIR, "
-        "or configure with -DRAYLIB_FETCHCONTENT=ON.")
-endif()
-
-target_link_libraries(voxel_dda_raylib PRIVATE ${_raylib_target})
+target_link_libraries(voxel_dda_raylib PRIVATE raylib)
 
 if(UNIX AND NOT APPLE)
     target_link_libraries(voxel_dda_raylib PRIVATE m)
